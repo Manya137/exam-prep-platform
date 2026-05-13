@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/main.tsx","./src/vite-env.d.ts","./src/api/index.ts","./src/components/layout.tsx","./src/pages/adminsyllabus.tsx","./src/pages/dashboard.tsx","./src/pages/landingpage.tsx","./src/pages/learningworkspace.tsx","./src/pages/loginpage.tsx","./src/pages/mcqpractice.tsx","./src/pages/notebook.tsx","./src/pages/studyplanner.tsx"],"version":"5.9.3"}
