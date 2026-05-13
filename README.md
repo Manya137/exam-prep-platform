@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # React + TypeScript + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
@@ -71,3 +72,6 @@ export default defineConfig([
   },
 ])
 ```
+=======
+# exam-prep-platform
+>>>>>>> 64c41ada3fbc68eb77af62944c781e7e48e4a7ce
