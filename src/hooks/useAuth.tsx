@@ -18,6 +18,15 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null)
 
+async function safeJson(res: Response) {
+  const text = await res.text()
+  try {
+    return JSON.parse(text)
+  } catch {
+    throw new Error(text.substring(0, 200) || 'Server error')
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [token, setToken] = useState<string | null>(null)
@@ -28,8 +37,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const storedToken = localStorage.getItem('token')
     
     if (storedUser && storedToken) {
-      setUser(JSON.parse(storedUser))
-      setToken(storedToken)
+      try {
+        setUser(JSON.parse(storedUser))
+        setToken(storedToken)
+      } catch {
+        localStorage.removeItem('user')
+        localStorage.removeItem('token')
+      }
     }
     setLoading(false)
   }, [])
@@ -38,16 +52,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const res = await fetch('/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
-      credentials: 'include'
+      body: JSON.stringify({ email, password })
     })
     
-    if (!res.ok) {
-      const data = await res.json()
-      throw new Error(data.error || 'Login failed')
-    }
+    const data = await safeJson(res)
+    if (!res.ok) throw new Error(data.error || 'Login failed')
     
-    const data = await res.json()
     setUser(data.user)
     setToken(data.token)
     localStorage.setItem('user', JSON.stringify(data.user))
@@ -58,16 +68,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const res = await fetch('/api/auth/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, email, password }),
-      credentials: 'include'
+      body: JSON.stringify({ name, email, password })
     })
     
-    if (!res.ok) {
-      const data = await res.json()
-      throw new Error(data.error || 'Registration failed')
-    }
+    const data = await safeJson(res)
+    if (!res.ok) throw new Error(data.error || 'Registration failed')
     
-    const data = await res.json()
     setUser(data.user)
     setToken(data.token)
     localStorage.setItem('user', JSON.stringify(data.user))
@@ -75,7 +81,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const logout = () => {
-    fetch('/api/auth/logout', { method: 'POST', credentials: 'include' })
+    fetch('/api/auth/logout', { method: 'POST' }).catch(() => {})
     setUser(null)
     setToken(null)
     localStorage.removeItem('user')

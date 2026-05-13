@@ -1,5 +1,14 @@
 const API_BASE = import.meta.env.VITE_API_URL || '/api'
 
+async function safeJson(res: Response) {
+  const text = await res.text()
+  try {
+    return JSON.parse(text)
+  } catch {
+    return { error: text.substring(0, 200) }
+  }
+}
+
 async function fetchWithAuth(url: string, options: RequestInit = {}) {
   const token = localStorage.getItem('token')
   const headers = {
@@ -18,11 +27,11 @@ async function fetchWithAuth(url: string, options: RequestInit = {}) {
   }
   
   if (!res.ok) {
-    const data = await res.json().catch(() => ({ error: 'Request failed' }))
-    throw new Error(data.error || 'Request failed')
+    const data = await safeJson(res)
+    throw new Error(data.error || `Request failed: ${res.status}`)
   }
   
-  return res.json()
+  return safeJson(res)
 }
 
 export const api = {
@@ -52,9 +61,9 @@ export const api = {
       Object.entries(params).forEach(([k, v]) => v && search.append(k, String(v)))
       return fetchWithAuth(`/questions/?${search}`)
     },
-    getRandom: (params: { examId?: number; subjectId?: number; count?: number }) => {
+    getRandom: (params: { examId?: number; subjectId?: number; count?: number; includeAnswer?: boolean }) => {
       const search = new URLSearchParams()
-      Object.entries(params).forEach(([k, v]) => v && search.append(k, String(v)))
+      Object.entries(params).forEach(([k, v]) => v !== undefined && search.append(k, String(v)))
       return fetchWithAuth(`/questions/random?${search}`)
     },
     submit: (questionId: number, selectedOption: string, timeTaken?: number) =>

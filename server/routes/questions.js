@@ -65,7 +65,7 @@ router.get('/', optionalAuth, (req, res) => {
 
 router.get('/random', optionalAuth, (req, res) => {
   try {
-    const { examId, subjectId, count = 10 } = req.query
+    const { examId, subjectId, count = 10, includeAnswer } = req.query
     const data = readData()
     
     let questions = [...data.questions]
@@ -74,16 +74,23 @@ router.get('/random', optionalAuth, (req, res) => {
     
     questions = questions.sort(() => Math.random() - 0.5).slice(0, parseInt(count))
     
-    const formatted = questions.map(q => ({
-      id: q.id,
-      exam: q.exam_id === 1 ? 'GATE' : 'CAT',
-      year: q.year,
-      topic: q.topic_id,
-      difficulty: q.difficulty,
-      question: q.question,
-      options: [q.option_a, q.option_b, q.option_c, q.option_d],
-      marks: q.marks
-    }))
+    const formatted = questions.map(q => {
+      const base = {
+        id: q.id,
+        exam: q.exam_id === 1 ? 'GATE' : 'CAT',
+        year: q.year,
+        topic: q.topic_id,
+        difficulty: q.difficulty,
+        question: q.question,
+        options: [q.option_a, q.option_b, q.option_c, q.option_d],
+        marks: q.marks
+      }
+      if (includeAnswer === 'true') {
+        base._correctOption = q.correct_option
+        base._explanation = q.explanation
+      }
+      return base
+    })
     
     res.json(formatted)
   } catch (err) {
